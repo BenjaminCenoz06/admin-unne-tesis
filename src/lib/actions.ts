@@ -16,7 +16,7 @@ function schemaFor(e: Entity, creating: boolean) {
     const req = `${f.label} es obligatorio`;
     if (f.type === 'number') {
       const n = z
-        .number({ invalid_type_error: `${f.label} debe ser un número entero` })
+        .number({ error: `${f.label} debe ser un número entero` })
         .int(`${f.label} debe ser un número entero`)
         .min(f.min ?? -1e9, `${f.label} no puede ser menor que ${f.min}`)
         .max(f.max ?? 1e9, `${f.label} no puede ser mayor que ${f.max}`);
