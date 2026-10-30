@@ -11,10 +11,18 @@ Next.js 15 + TypeScript + Tailwind + Supabase (Auth + Postgres con RLS) + Zod + 
 - **Usuarios y roles** (superadmin, admin, editor, colaborador, revisor) y **Auditoría** (solo lectura).
 - Cabeceras de seguridad, `noindex` y `robots.txt` que bloquea todo.
 
+- **Ajustes del sitio**: textos de portada y de cada sección, contacto y WhatsApp, redes sociales, aviso destacado, pie de página y color de acento.
+- **Multimedia**: subir, ver, copiar el link y borrar portadas, PDF y fotos (Supabase Storage). Los libros y el equipo suben su archivo desde el propio formulario.
+- **Testimonios** y **Efemérides** (con resumen para la tarjeta), además de **Duplicar** registros.
+- El sitio público lee todo esto desde la base (con contenido de respaldo si la base no responde).
+
+## Requiere la migración 002
+Ejecutar `supabase/migration-002.sql` (repo del sitio público) en Supabase → SQL Editor. Crea testimonios, el bucket
+`media` y los campos `photo_url` y `summary`. Hasta entonces esas secciones usan el contenido de siempre.
+
 ## Lo que NO está hecho todavía
-Multimedia/Storage, constructor de páginas, vista previa, versiones/comparación, programación de publicaciones,
-edición del menú y de los ajustes globales, y la conexión del sitio público a esta base. Ver `docs/admin/PLAN-ADMIN.md`
-en el repo del sitio público.
+Constructor de páginas con bloques, vista previa por dispositivo, versiones/comparación, programación de publicaciones,
+edición del menú de navegación y copias de seguridad. Ver `docs/admin/PLAN-ADMIN.md` en el repo del sitio público.
 
 ## Variables de entorno
 Copiá `.env.example` a `.env.local`. Solo se usan la URL y la clave **publishable**; la seguridad la dan las reglas RLS

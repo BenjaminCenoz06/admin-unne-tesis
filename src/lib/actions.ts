@@ -21,7 +21,7 @@ function schemaFor(e: Entity, creating: boolean) {
         .min(f.min ?? -1e9, `${f.label} no puede ser menor que ${f.min}`)
         .max(f.max ?? 1e9, `${f.label} no puede ser mayor que ${f.max}`);
       shape[f.name] = z.preprocess(
-        (v) => (v === '' || v == null ? null : Number(v)),
+        (v) => (v === '' || v == null ? (f.defaultValue ?? null) : Number(v)),
         f.required ? n : n.nullable(),
       );
     } else if (f.type === 'tags') {
@@ -33,7 +33,7 @@ function schemaFor(e: Entity, creating: boolean) {
       const s = z.string().trim().max(200);
       shape[f.name] = f.required ? s.min(1, req) : z.preprocess((v) => (v === '' ? null : v), s.nullable());
     } else {
-      let s = z.string().trim().max(f.type === 'textarea' ? 4000 : 300);
+      let s = z.string().trim().max(f.maxLen ?? (f.type === 'textarea' ? 4000 : 300), `${f.label}: máximo ${f.maxLen ?? (f.type === 'textarea' ? 4000 : 300)} caracteres`);
       if (f.pattern) s = s.regex(f.pattern, f.patternMsg ?? `${f.label} tiene un formato inválido`);
       shape[f.name] = f.required ? s.min(1, req) : z.preprocess((v) => (v === '' ? null : v), s.nullable());
     }
@@ -104,6 +104,27 @@ export async function setStatus(entityKey: string, id: string, status: string): 
   if (data?.length) await logAudit(`status:${status}`, e.table, id);
   revalidatePath(`/c/${e.key}`);
   revalidatePath('/dashboard');
+}
+
+/** Crea una copia en borrador del registro (no aplica a categorías, cuyo identificador es fijo). */
+export async function duplicateEntity(entityKey: string, id: string): Promise<void> {
+  await requireStaff();
+  const e = getEntity(entityKey);
+  if (!e || e.idType !== 'uuid') return;
+  const supabase = await createClient();
+  const { data: row } = await supabase.from(e.table).select('*').eq('id', id).maybeSingle();
+  if (!row) return;
+
+  const copy: Record<string, unknown> = { ...row, status: 'draft' };
+  for (const k of ['id', 'created_at', 'updated_at']) delete copy[k];
+  copy[e.titleField] = `${String(row[e.titleField] ?? '')} (copia)`.slice(0, 300);
+  if (typeof copy.slug === 'string') copy.slug = `${copy.slug}-copia-${Math.random().toString(36).slice(2, 6)}`;
+
+  const { data, error } = await supabase.from(e.table).insert(copy).select('id').single();
+  if (error || !data) redirect(`/c/${e.key}?error=${encodeURIComponent('No se pudo duplicar.')}`);
+  await logAudit('duplicate', e.table, String(data.id), { title: copy[e.titleField] });
+  revalidatePath(`/c/${e.key}`);
+  redirect(`/c/${e.key}/${data.id}`);
 }
 
 export async function deleteEntity(entityKey: string, id: string): Promise<void> {

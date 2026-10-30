@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, Folder, MapPin, Users, type LucideIcon } from 'lucide-react';
+import { BookOpen, CalendarDays, Folder, MapPin, MessageSquareQuote, Users, type LucideIcon } from 'lucide-react';
 
 export const STATUSES = ['draft', 'pending', 'approved', 'published', 'archived'] as const;
 export type Status = (typeof STATUSES)[number];
@@ -24,6 +24,13 @@ export type Field = {
   patternMsg?: string;
   min?: number;
   max?: number;
+  maxLen?: number;
+  /** Valor que se usa si el campo queda vacío (la base no admite nulos en estas columnas). */
+  defaultValue?: number | string;
+  /** Valor inicial al crear un registro nuevo. */
+  initial?: string;
+  /** Permite subir un archivo a la biblioteca y completar el campo con su link. */
+  upload?: { folder: string; accept: string };
   help?: string;
   wide?: boolean;
 };
@@ -43,6 +50,9 @@ export type Entity = {
 };
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+// Link https (archivo subido a la biblioteca) o ruta propia del sitio público
+const MEDIA_PATH = /^(https:\/\/[^\s"'<>]+|(?:images|libros)\/[\w\-./]+)$/;
+const HTTPS = /^https:\/\/[^\s"'<>]+$/;
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
 export const ENTITIES: Entity[] = [
@@ -61,9 +71,9 @@ export const ENTITIES: Entity[] = [
       { name: 'year', label: 'Año de publicación', type: 'number', min: 1000, max: 2100 },
       { name: 'pages', label: 'Páginas', type: 'number', min: 1, max: 20000 },
       { name: 'copies', label: 'Ejemplares', type: 'number', required: true, min: 0, max: 100000 },
-      { name: 'position', label: 'Orden', type: 'number', min: 0, max: 100000 },
-      { name: 'pdf_path', label: 'Ruta del PDF', type: 'text', help: 'Ej: libros/cien-anos-de-soledad.pdf' },
-      { name: 'cover_path', label: 'Ruta de la portada', type: 'text', help: 'Ej: images/covers/cien-anos-de-soledad.jpg' },
+      { name: 'position', label: 'Orden', type: 'number', min: 0, max: 100000, defaultValue: 0 },
+      { name: 'cover_path', label: 'Portada', type: 'text', wide: true, pattern: MEDIA_PATH, patternMsg: 'Subí una imagen o pegá un link https://', upload: { folder: 'portadas', accept: 'image/jpeg,image/png,image/webp' }, help: 'Si queda vacía, el sitio busca images/covers/<identificador>.jpg' },
+      { name: 'pdf_path', label: 'Libro en PDF', type: 'text', wide: true, pattern: MEDIA_PATH, patternMsg: 'Subí un PDF o pegá un link https://', upload: { folder: 'libros', accept: 'application/pdf' }, help: 'Con PDF cargado, el libro muestra “Leer ahora”.' },
     ],
   },
   {
@@ -73,7 +83,7 @@ export const ENTITIES: Entity[] = [
     fields: [
       { name: 'id', label: 'Identificador', type: 'text', required: true, createOnly: true, pattern: SLUG, patternMsg: 'Solo minúsculas, números y guiones', help: 'No se puede cambiar después de crearla.' },
       { name: 'title', label: 'Título', type: 'text', required: true },
-      { name: 'position', label: 'Orden', type: 'number', min: 0, max: 1000 },
+      { name: 'position', label: 'Orden', type: 'number', min: 0, max: 1000, defaultValue: 0 },
     ],
   },
   {
@@ -85,8 +95,9 @@ export const ENTITIES: Entity[] = [
       { name: 'role', label: 'Cargo', type: 'text', required: true },
       { name: 'bio', label: 'Descripción', type: 'textarea', wide: true },
       { name: 'focus', label: 'Áreas de trabajo', type: 'tags', help: 'Separadas por coma', wide: true },
-      { name: 'img', label: 'Foto (número 1 a 5)', type: 'number', min: 1, max: 99, help: 'Corresponde a images/team/<n>.png' },
-      { name: 'position', label: 'Orden', type: 'number', min: 0, max: 1000 },
+      { name: 'photo_url', label: 'Foto', type: 'text', wide: true, pattern: HTTPS, patternMsg: 'Subí una imagen o pegá un link https://', upload: { folder: 'equipo', accept: 'image/jpeg,image/png,image/webp' }, help: 'Si queda vacía, se usa la foto de images/team/<número>.png' },
+      { name: 'img', label: 'Foto por defecto (número 1 a 5)', type: 'number', min: 1, max: 99, help: 'Se usa solo si no subiste una foto propia.' },
+      { name: 'position', label: 'Orden', type: 'number', min: 0, max: 1000, defaultValue: 0 },
     ],
   },
   {
@@ -99,7 +110,7 @@ export const ENTITIES: Entity[] = [
       { name: 'hours', label: 'Horario', type: 'text' },
       { name: 'tel', label: 'Teléfono', type: 'text' },
       { name: 'tag', label: 'Descripción corta', type: 'text', wide: true },
-      { name: 'position', label: 'Orden', type: 'number', min: 0, max: 1000 },
+      { name: 'position', label: 'Orden', type: 'number', min: 0, max: 1000, defaultValue: 0 },
     ],
   },
   {
@@ -111,7 +122,23 @@ export const ENTITIES: Entity[] = [
       { name: 'month', label: 'Mes', type: 'select', required: true, options: MESES.map((l, i) => ({ value: String(i + 1), label: l })) },
       { name: 'day', label: 'Día', type: 'number', required: true, min: 1, max: 31 },
       { name: 'category', label: 'Categoría', type: 'text' },
-      { name: 'body', label: 'Texto', type: 'textarea', wide: true },
+      { name: 'summary', label: 'Resumen (tarjeta de la página)', type: 'textarea', wide: true, maxLen: 300, help: 'Texto corto que se ve en la tarjeta de la sección “Fechas para celebrar”.' },
+      { name: 'body', label: 'Texto completo (ventana al abrir)', type: 'textarea', wide: true },
+    ],
+  },
+  {
+    key: 'testimonios', table: 'testimonials', label: 'Testimonios', singular: 'testimonio', icon: MessageSquareQuote, idType: 'uuid',
+    titleField: 'title', order: { column: 'position', ascending: true }, search: ['title', 'quote'],
+    columns: [{ name: 'title', label: 'Quién habla' }, { name: 'quote', label: 'Cita' }, { name: 'position', label: 'Orden', kind: 'number' }],
+    fields: [
+      { name: 'title', label: 'Quién habla', type: 'text', required: true, help: 'Ej: Estudiantes, Familias, Docentes' },
+      { name: 'quote', label: 'Cita', type: 'textarea', required: true, wide: true, maxLen: 300 },
+      { name: 'tags', label: 'Etiquetas', type: 'text', help: 'Ej: Estudio · Salas silenciosas' },
+      { name: 'initial', label: 'Inicial del avatar', type: 'text', required: true, maxLen: 2, initial: '' },
+      { name: 'hue', label: 'Color del avatar (0 a 360)', type: 'number', required: true, min: 0, max: 360, initial: '150', help: '0 rojo · 60 amarillo · 150 verde · 220 azul · 300 violeta' },
+      { name: 'height', label: 'Alto de la tarjeta (px)', type: 'number', required: true, min: 120, max: 320, initial: '190', help: 'Entre 120 y 320. Varíalo para que el muro se vea irregular.' },
+      { name: 'link', label: 'Enlace del botón “Conocer más”', type: 'text', initial: '#servicios', help: 'Una sección (#servicios, #eventos…) o un link https://' },
+      { name: 'position', label: 'Orden', type: 'number', min: 0, max: 1000, defaultValue: 0 },
     ],
   },
 ];

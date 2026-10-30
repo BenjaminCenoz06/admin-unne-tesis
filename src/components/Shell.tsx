@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { BookMarked, ExternalLink, LayoutDashboard, LogOut, Menu, ScrollText, UserCog, X } from 'lucide-react';
+import { BookMarked, ExternalLink, ImageIcon, LayoutDashboard, LogOut, Menu, ScrollText, SlidersHorizontal, UserCog, X } from 'lucide-react';
 import { ENTITIES } from '@/lib/entities';
 import { logout } from '@/app/login/actions';
 
@@ -44,6 +44,9 @@ export default function Shell({ name, email, roleLabel, isAdmin, children }: Pro
           {item('/dashboard', 'Panel', LayoutDashboard)}
           <p className="px-3 pb-1 pt-5 text-[11px] font-semibold uppercase tracking-wider text-white/40">Contenido</p>
           {ENTITIES.map((e) => item(`/c/${e.key}`, e.label, e.icon))}
+          <p className="px-3 pb-1 pt-5 text-[11px] font-semibold uppercase tracking-wider text-white/40">Sitio</p>
+          {isAdmin && item('/ajustes', 'Ajustes del sitio', SlidersHorizontal)}
+          {item('/multimedia', 'Multimedia', ImageIcon)}
           {isAdmin && (
             <>
               <p className="px-3 pb-1 pt-5 text-[11px] font-semibold uppercase tracking-wider text-white/40">Administración</p>

@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Download, Pencil, Plus, Search } from 'lucid
 import { ADMIN_ROLES, requireStaff } from '@/lib/auth';
 import { getEntity, STATUSES, STATUS_LABEL, type Status } from '@/lib/entities';
 import { resolveOptions } from '@/lib/options';
-import { deleteEntity, setStatus } from '@/lib/actions';
+import { deleteEntity, duplicateEntity, setStatus } from '@/lib/actions';
 import { createClient } from '@/lib/supabase/server';
 import ConfirmButton from '@/components/ConfirmButton';
 
@@ -118,6 +118,11 @@ export default async function EntityList({ params, searchParams }: { params: Pro
                   <td className="td">
                     <div className="flex items-center justify-end gap-1.5">
                       <Link href={`/c/${e.key}/${encodeURIComponent(id)}`} className="btn btn-ghost btn-sm"><Pencil className="h-3.5 w-3.5" aria-hidden />Editar</Link>
+                      {e.idType === 'uuid' && (
+                        <form action={duplicateEntity.bind(null, e.key, id)}>
+                          <button type="submit" className="btn btn-ghost btn-sm" title="Crea una copia en borrador">Duplicar</button>
+                        </form>
+                      )}
                       {st === 'published' ? (
                         <ConfirmButton action={setStatus.bind(null, e.key, id, 'archived')} message="¿Archivar? Dejará de verse en el sitio." className="btn btn-ghost btn-sm">Archivar</ConfirmButton>
                       ) : (

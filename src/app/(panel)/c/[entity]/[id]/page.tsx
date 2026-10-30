@@ -33,6 +33,7 @@ export default async function EditEntity({ params }: { params: Promise<{ entity:
     if (f.createOnly && !creating) continue;
     fields.push({
       name: f.name, label: f.label, type: f.type, required: f.required, help: f.help, wide: f.wide, min: f.min, max: f.max,
+      maxLen: f.maxLen, upload: f.upload,
       options: f.type === 'select' ? await resolveOptions(supabase, f) : undefined,
     });
   }
@@ -40,7 +41,8 @@ export default async function EditEntity({ params }: { params: Promise<{ entity:
   const initial: Record<string, string> = { status: String(row?.status ?? 'draft') };
   for (const f of fields) {
     const v = row?.[f.name];
-    initial[f.name] = Array.isArray(v) ? v.join(', ') : v == null ? '' : String(v);
+    const start = e.fields.find((x) => x.name === f.name)?.initial ?? '';
+    initial[f.name] = row ? (Array.isArray(v) ? v.join(', ') : v == null ? '' : String(v)) : start;
   }
 
   return (
