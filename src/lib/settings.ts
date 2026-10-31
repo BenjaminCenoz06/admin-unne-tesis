@@ -40,15 +40,16 @@ export const SETTING_GROUPS: SettingGroup[] = [
     ],
   },
   {
-    id: 'contacto', label: 'Contacto y WhatsApp', icon: Mail, desc: 'Se actualiza en el pie de página, los formularios y el botón flotante.',
+    id: 'contacto', label: 'Contacto, WhatsApp y chat', icon: Mail, desc: 'Se actualiza en el pie de página, los formularios y el chat de ayuda (que deriva a WhatsApp).',
     fields: [
       { key: 'contact_email', label: 'Correo de contacto', type: 'email', def: 'contacto@bibliohub.org' },
       { key: 'contact_whatsapp', label: 'WhatsApp (solo números)', type: 'wa', def: '5493786403914', help: 'Código de país + número, sin + ni espacios. Ej: 5493786403914' },
       { key: 'contact_whatsapp_label', label: 'Texto del WhatsApp en el pie', type: 'text', def: '3786 403914 · WhatsApp', max: 60 },
       { key: 'contact_phone1', label: 'Teléfono 1', type: 'phone', def: '(+54-11) 4000-0000' },
       { key: 'contact_phone2', label: 'Teléfono 2', type: 'phone', def: '(+54-11) 4000-0002' },
-      { key: 'wa_message', label: 'Mensaje inicial de WhatsApp', type: 'text', def: 'Hola BiblioHub, quisiera hacer una consulta.', max: 160 },
-      { key: 'wa_label', label: 'Texto del botón flotante', type: 'text', def: 'Escríbenos por WhatsApp', max: 50 },
+      { key: 'wa_message', label: 'Mensaje inicial de WhatsApp', type: 'text', def: 'Hola BiblioHub, quisiera hacer una consulta.', max: 160, help: 'Es lo primero que se escribe cuando alguien pasa del chat a WhatsApp.' },
+      { key: 'wa_label', label: 'Texto del botón del chat', type: 'text', def: 'Chatea con nosotros', max: 50, help: 'Aparece junto al botón flotante del chat.' },
+      { key: 'chat_welcome', label: 'Mensaje de bienvenida del chat', type: 'textarea', def: '¡Hola! Soy el asistente de BiblioHub. Cuéntame qué necesitas o elige un tema.', max: 200 },
     ],
   },
   {
